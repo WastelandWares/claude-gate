@@ -1,0 +1,58 @@
+# claude-gate default rules
+# Rules are evaluated top-to-bottom, first match wins.
+# Actions: passthrough (allow), gate (require auth), deny (hard block)
+
+[defaults]
+action = "passthrough"
+
+# --- Hard blocks ---
+
+[[rules]]
+name = "Hard block: system destruction"
+tool = "Bash"
+pattern = '(rm\s+-rf\s+[/~]|mkfs|dd\s+if=|:\(\)\s*\{)'
+action = "deny"
+reason = "This command could destroy system-level files or devices."
+risk = "critical"
+
+# --- Gated commands ---
+
+[[rules]]
+name = "Gate: force push"
+tool = "Bash"
+pattern = 'git\s+push\s+.*--force'
+action = "gate"
+reason = "Force-pushing rewrites remote history. Other contributors' work may be lost."
+risk = "high"
+
+[[rules]]
+name = "Gate: package install"
+tool = "Bash"
+pattern = '(npm install|pip install|cargo install|brew install)'
+action = "gate"
+reason = "Installing packages modifies your system environment and pulls third-party code."
+risk = "medium"
+
+[[rules]]
+name = "Gate: env/secrets access"
+tool = "Bash"
+pattern = '(\.env|secrets|credentials|password|api.?key)'
+action = "gate"
+reason = "This command may read or expose sensitive credentials."
+risk = "high"
+
+[[rules]]
+name = "Gate: writes to home directory dotfiles"
+tool = "Write"
+path_pattern = '^\.(bash|zsh|ssh|gnupg|config)'
+action = "gate"
+reason = "Modifying dotfiles changes your shell environment and security configuration."
+risk = "high"
+
+[[rules]]
+name = "Gate: network requests"
+tool = "Bash"
+pattern = '(curl|wget|nc\s|ncat|ssh\s)'
+action = "gate"
+reason = "This command initiates a network connection."
+risk = "medium"
