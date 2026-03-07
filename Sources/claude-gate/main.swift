@@ -4,30 +4,30 @@ import AppKit
 // Read all JSON from stdin (readDataToEndOfFile ensures we get everything)
 let inputData = FileHandle.standardInput.readDataToEndOfFile()
 guard !inputData.isEmpty else {
-    // No input — allow by default
+    // No input — allow (hook was invoked with nothing)
     print(HookOutput.allow(reason: "No input received").toJSON())
     exit(0)
 }
 
-// Parse hook input
+// Parse hook input — fail-closed: deny if we can't parse
 let input: HookInput
 do {
     input = try JSONDecoder().decode(HookInput.self, from: inputData)
 } catch {
     FileHandle.standardError.write(Data("claude-gate: Failed to parse input: \(error.localizedDescription)\n".utf8))
-    print(HookOutput.allow(reason: "Failed to parse input, allowing by default").toJSON())
-    exit(0)
+    print(HookOutput.deny(reason: "claude-gate: Failed to parse hook input").toJSON())
+    exit(2)
 }
 
-// Load rules
+// Load rules — fail-closed: deny if config is missing or broken
 let configPath = NSString("~/.config/claude-gate/rules.toml").expandingTildeInPath
 let engine: RuleEngine
 do {
     engine = try RuleEngine(configPath: configPath)
 } catch {
     FileHandle.standardError.write(Data("claude-gate: Failed to load rules from \(configPath): \(error.localizedDescription)\n".utf8))
-    print(HookOutput.allow(reason: "Failed to load rules, allowing by default").toJSON())
-    exit(0)
+    print(HookOutput.deny(reason: "claude-gate: Failed to load rules config").toJSON())
+    exit(2)
 }
 
 // Evaluate
@@ -65,20 +65,23 @@ case .gate:
     // Set up NSApplication for the gate window
     let app = NSApplication.shared
     app.setActivationPolicy(.accessory)
-    var wasApproved = false
 
-    let gateWindow = GateWindow(
-        ruleName: rule.name,
-        riskLevel: rule.risk.rawValue,
-        reason: rule.reason,
-        commandText: displayText,
-        workingDirectory: cwd,
-        justification: input.toolDescription
-    )
+    // Guard against double output — only one response allowed
+    var hasResponded = false
+    let respondLock = NSLock()
 
-    let auth = BiometricAuth()
+    func respond(output: HookOutput, exitCode: Int32) {
+        respondLock.lock()
+        guard !hasResponded else {
+            respondLock.unlock()
+            return
+        }
+        hasResponded = true
+        respondLock.unlock()
 
-    func stopApp() {
+        print(output.toJSON())
+        fflush(stdout)
+
         app.stop(nil)
         // Post a dummy event to unblock the run loop
         let event = NSEvent.otherEvent(
@@ -95,15 +98,28 @@ case .gate:
         if let event = event {
             app.postEvent(event, atStart: true)
         }
+
+        DispatchQueue.main.async {
+            exit(exitCode)
+        }
     }
+
+    let gateWindow = GateWindow(
+        ruleName: rule.name,
+        riskLevel: rule.risk.rawValue,
+        reason: rule.reason,
+        commandText: displayText,
+        workingDirectory: cwd,
+        justification: input.toolDescription
+    )
+
+    let auth = BiometricAuth()
 
     gateWindow.onAuthenticate = {
         auth.authenticate(reason: "claude-gate: \(rule.name)") { success, errorMessage in
             if success {
-                wasApproved = true
                 gateWindow.close()
-                print(HookOutput.allow(reason: "Authenticated via Touch ID").toJSON())
-                stopApp()
+                respond(output: .allow(reason: "Authenticated via Touch ID"), exitCode: 0)
             } else {
                 gateWindow.showError(errorMessage ?? "Authentication failed")
             }
@@ -112,13 +128,13 @@ case .gate:
 
     gateWindow.onCancel = {
         FileHandle.standardError.write(Data("claude-gate: Authentication cancelled\n".utf8))
-        print(HookOutput.deny(reason: "Authentication cancelled").toJSON())
-        stopApp()
+        respond(output: .deny(reason: "Authentication cancelled"), exitCode: 2)
     }
 
     gateWindow.show()
     app.activate(ignoringOtherApps: true)
     app.run()
 
-    exit(wasApproved ? 0 : 2)
+    // Fallback exit if respond() hasn't been called yet
+    exit(2)
 }

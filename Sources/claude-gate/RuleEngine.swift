@@ -31,6 +31,10 @@ class RuleEngine {
                       let reason = ruleTable["reason"]?.string,
                       let riskStr = ruleTable["risk"]?.string,
                       let risk = RiskLevel(rawValue: riskStr) else {
+                    let ruleName = ruleTable["name"]?.string ?? "rule[\(i)]"
+                    FileHandle.standardError.write(
+                        Data("claude-gate: Warning: Skipping malformed rule '\(ruleName)' — missing or invalid required field\n".utf8)
+                    )
                     continue
                 }
 
