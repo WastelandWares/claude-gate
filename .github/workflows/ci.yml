@@ -48,7 +48,7 @@ jobs:
           echo "PASS: deny fork bomb"
 
           echo "--- Test: fail-closed (bad JSON) ---"
-          RESULT=$(echo 'not json' | $BINARY 2>/dev/null)
+          RESULT=$(echo 'not json' | $BINARY 2>/dev/null || true)
           echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['hookSpecificOutput']['permissionDecision'] == 'deny', f'Expected deny, got {d}'"
           echo "PASS: fail-closed on bad input"
 
