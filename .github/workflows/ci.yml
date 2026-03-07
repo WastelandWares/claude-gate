@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build (debug)
+        run: swift build 2>&1
+
+      - name: Build (release)
+        run: swift build --configuration release 2>&1
+
+      - name: Test rule engine
+        run: |
+          # Seed config for tests
+          mkdir -p ~/.config/claude-gate
+          cp Config/default-rules.toml ~/.config/claude-gate/rules.toml
+
+          BINARY=".build/debug/claude-gate"
+
+          echo "--- Test: passthrough (safe command) ---"
+          RESULT=$(echo '{"tool_name":"Bash","tool_input":{"command":"ls -la"}}' | $BINARY 2>/dev/null)
+          echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['hookSpecificOutput']['permissionDecision'] == 'allow', f'Expected allow, got {d}'"
+          echo "PASS: passthrough"
+
+          echo "--- Test: deny (rm -rf /) ---"
+          RESULT=$(echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | $BINARY 2>/dev/null)
+          echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['hookSpecificOutput']['permissionDecision'] == 'deny', f'Expected deny, got {d}'"
+          echo "PASS: deny rm -rf /"
+
+          echo "--- Test: deny (mkfs) ---"
+          RESULT=$(echo '{"tool_name":"Bash","tool_input":{"command":"mkfs.ext4 /dev/sda1"}}' | $BINARY 2>/dev/null)
+          echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['hookSpecificOutput']['permissionDecision'] == 'deny', f'Expected deny, got {d}'"
+          echo "PASS: deny mkfs"
+
+          echo "--- Test: deny (fork bomb) ---"
+          RESULT=$(echo '{"tool_name":"Bash","tool_input":{"command":":(){ :|:& };:"}}' | $BINARY 2>/dev/null)
+          echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['hookSpecificOutput']['permissionDecision'] == 'deny', f'Expected deny, got {d}'"
+          echo "PASS: deny fork bomb"
+
+          echo "--- Test: fail-closed (bad JSON) ---"
+          RESULT=$(echo 'not json' | $BINARY 2>/dev/null || true)
+          echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['hookSpecificOutput']['permissionDecision'] == 'deny', f'Expected deny, got {d}'"
+          echo "PASS: fail-closed on bad input"
+
+          echo "--- Test: passthrough (safe Write) ---"
+          RESULT=$(echo '{"tool_name":"Write","tool_input":{"file_path":"src/app.ts","content":"hello"}}' | $BINARY 2>/dev/null)
+          echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['hookSpecificOutput']['permissionDecision'] == 'allow', f'Expected allow, got {d}'"
+          echo "PASS: passthrough Write"
+
+          echo ""
+          echo "All tests passed!"

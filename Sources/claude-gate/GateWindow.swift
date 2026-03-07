@@ -6,11 +6,14 @@ class GateWindow: NSObject, NSWindowDelegate {
 
     private let window: NSWindow
     private let errorLabel: NSTextField
+    private let auditHeader: NSTextField
+    private let auditLabel: NSTextField
+    private let stackView: NSStackView
     private var resolved = false
 
     init(ruleName: String, riskLevel: String, reason: String, commandText: String, workingDirectory: String, justification: String? = nil) {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 440),
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 480),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -28,6 +31,7 @@ class GateWindow: NSObject, NSWindowDelegate {
         stackView.edgeInsets = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
         stackView.spacing = 8
         stackView.translatesAutoresizingMaskIntoConstraints = false
+        self.stackView = stackView
 
         // Rule name
         let ruleLabel = NSTextField(labelWithString: ruleName)
@@ -99,6 +103,22 @@ class GateWindow: NSObject, NSWindowDelegate {
         cwdLabel.font = NSFont.systemFont(ofSize: 13)
         cwdLabel.lineBreakMode = .byTruncatingMiddle
 
+        // SECURITY AUDIT section (hidden initially, shown when audit completes)
+        let auditSeparator = NSBox()
+        auditSeparator.boxType = .separator
+        auditSeparator.translatesAutoresizingMaskIntoConstraints = false
+
+        let auditHeader = NSTextField(labelWithString: "SECURITY AUDIT: analyzing...")
+        auditHeader.font = NSFont.boldSystemFont(ofSize: 13)
+        auditHeader.textColor = .secondaryLabelColor
+        self.auditHeader = auditHeader
+
+        let auditLabel = NSTextField(wrappingLabelWithString: "")
+        auditLabel.font = NSFont.systemFont(ofSize: 12)
+        auditLabel.textColor = .secondaryLabelColor
+        auditLabel.isHidden = true
+        self.auditLabel = auditLabel
+
         // Error label (hidden initially)
         let errorLabel = NSTextField(labelWithString: "")
         errorLabel.font = NSFont.systemFont(ofSize: 12)
@@ -137,6 +157,9 @@ class GateWindow: NSObject, NSWindowDelegate {
         stackView.addArrangedSubview(scrollView)
         stackView.addArrangedSubview(cwdHeader)
         stackView.addArrangedSubview(cwdLabel)
+        stackView.addArrangedSubview(auditSeparator)
+        stackView.addArrangedSubview(auditHeader)
+        stackView.addArrangedSubview(auditLabel)
         stackView.addArrangedSubview(spacer)
         stackView.addArrangedSubview(errorLabel)
         stackView.addArrangedSubview(buttonBar)
@@ -153,12 +176,14 @@ class GateWindow: NSObject, NSWindowDelegate {
             stackView.trailingAnchor.constraint(equalTo: window.contentView!.trailingAnchor),
 
             separator.widthAnchor.constraint(equalTo: stackView.widthAnchor, constant: -40),
+            auditSeparator.widthAnchor.constraint(equalTo: stackView.widthAnchor, constant: -40),
 
             scrollView.heightAnchor.constraint(lessThanOrEqualToConstant: 80),
             scrollView.widthAnchor.constraint(equalTo: stackView.widthAnchor, constant: -40),
 
             reasonLabel.widthAnchor.constraint(equalTo: stackView.widthAnchor, constant: -40),
             cwdLabel.widthAnchor.constraint(equalTo: stackView.widthAnchor, constant: -40),
+            auditLabel.widthAnchor.constraint(equalTo: stackView.widthAnchor, constant: -40),
 
             buttonBar.trailingAnchor.constraint(equalTo: stackView.trailingAnchor, constant: -20),
         ])
@@ -194,6 +219,28 @@ class GateWindow: NSObject, NSWindowDelegate {
     func showError(_ message: String) {
         errorLabel.stringValue = message
         errorLabel.isHidden = false
+    }
+
+    /// Update the security audit section with results
+    func showAuditResult(verdict: String, analysis: String) {
+        let color: NSColor
+        switch verdict.uppercased() {
+        case "SAFE": color = .systemGreen
+        case "SUSPICIOUS": color = .systemOrange
+        case "DANGEROUS": color = .systemRed
+        default: color = .secondaryLabelColor
+        }
+
+        auditHeader.stringValue = "SECURITY AUDIT: \(verdict.uppercased())"
+        auditHeader.textColor = color
+        auditLabel.stringValue = analysis
+        auditLabel.isHidden = false
+    }
+
+    /// Show that the audit is unavailable (no API key)
+    func showAuditUnavailable() {
+        auditHeader.stringValue = "SECURITY AUDIT: unavailable (no ANTHROPIC_API_KEY)"
+        auditHeader.textColor = .tertiaryLabelColor
     }
 
     // MARK: - Actions

@@ -8,6 +8,8 @@ struct HookInput: Codable {
     let permissionMode: String?
     let hookEventName: String?
 
+    let transcriptPath: String?
+
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
         case toolName = "tool_name"
@@ -15,6 +17,7 @@ struct HookInput: Codable {
         case cwd
         case permissionMode = "permission_mode"
         case hookEventName = "hook_event_name"
+        case transcriptPath = "transcript_path"
     }
 
     var command: String? {
