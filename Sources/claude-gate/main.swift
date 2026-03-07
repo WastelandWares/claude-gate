@@ -132,6 +132,12 @@ case .gate:
 
     // Kick off security audit in background (non-blocking)
     SecurityAudit.run(input: input, ruleName: rule.name, ruleReason: rule.reason) { result in
+        // Guard: don't update UI if the window has already been resolved
+        respondLock.lock()
+        let alreadyDone = hasResponded
+        respondLock.unlock()
+        guard !alreadyDone else { return }
+
         if let result = result {
             gateWindow.showAuditResult(verdict: result.verdict.rawValue, analysis: result.analysis)
         } else {
@@ -144,9 +150,5 @@ case .gate:
     app.run()
 
     // Fallback: if app.run() returns without respond() being called, deny cleanly
-    if !hasResponded {
-        print(HookOutput.deny(reason: "Gate window closed without decision").toJSON())
-        fflush(stdout)
-    }
-    exit(0)
+    respond(output: .deny(reason: "Gate window closed without decision"), exitCode: 0)
 }

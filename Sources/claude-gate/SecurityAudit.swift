@@ -85,7 +85,14 @@ class SecurityAudit {
     private static func readTranscriptTail(path: String?, maxLines: Int) -> String {
         guard let path = path else { return "[no transcript available]" }
 
-        guard let data = FileManager.default.contents(atPath: path),
+        // Validate transcript path is within expected Claude directory
+        let expandedPath = NSString(string: path).standardizingPath
+        let claudeDir = NSString(string: "~/.claude").expandingTildeInPath
+        guard expandedPath.hasPrefix(claudeDir) else {
+            return "[transcript path outside expected directory]"
+        }
+
+        guard let data = FileManager.default.contents(atPath: expandedPath),
               let content = String(data: data, encoding: .utf8) else {
             return "[could not read transcript]"
         }
