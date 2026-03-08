@@ -12,6 +12,7 @@ class GateWindow: NSObject, NSWindowDelegate {
     private let errorLabel: NSTextField
     private let auditHeader: NSTextField
     private let auditLabel: NSTextField
+    private let auditDisclaimer: NSTextField
     private let justificationResponseLabel: NSTextField
     private let whyButton: NSButton
     private let stackView: NSStackView
@@ -140,6 +141,12 @@ class GateWindow: NSObject, NSWindowDelegate {
         auditLabel.isHidden = true
         self.auditLabel = auditLabel
 
+        let auditDisclaimer = NSTextField(labelWithString: "AI audit is advisory only — verify commands yourself")
+        auditDisclaimer.font = NSFont.systemFont(ofSize: 10)
+        auditDisclaimer.textColor = .tertiaryLabelColor
+        auditDisclaimer.isHidden = true
+        self.auditDisclaimer = auditDisclaimer
+
         // "Why?" button and justification response
         let whyButton = NSButton(title: "Why?", target: nil, action: nil)
         whyButton.bezelStyle = .rounded
@@ -206,6 +213,7 @@ class GateWindow: NSObject, NSWindowDelegate {
         stackView.addArrangedSubview(auditSeparator)
         stackView.addArrangedSubview(auditHeader)
         stackView.addArrangedSubview(auditLabel)
+        stackView.addArrangedSubview(auditDisclaimer)
         stackView.addArrangedSubview(whyButton)
         stackView.addArrangedSubview(justificationResponseLabel)
         stackView.addArrangedSubview(spacer)
@@ -310,7 +318,7 @@ class GateWindow: NSObject, NSWindowDelegate {
     func showAuditResult(verdict: String, analysis: String) {
         let color: NSColor
         switch verdict.uppercased() {
-        case "SAFE": color = .systemGreen
+        case "SAFE": color = .systemBlue
         case "SUSPICIOUS": color = .systemOrange
         case "DANGEROUS": color = .systemRed
         default: color = .secondaryLabelColor
@@ -320,6 +328,7 @@ class GateWindow: NSObject, NSWindowDelegate {
         auditHeader.textColor = color
         auditLabel.stringValue = analysis
         auditLabel.isHidden = false
+        auditDisclaimer.isHidden = false
     }
 
     /// Show the justification response from the API

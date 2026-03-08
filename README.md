@@ -216,6 +216,8 @@ Every decision (passthrough, deny, gate result) is appended to `~/.config/claude
 
 Each entry includes: timestamp, tool name, command/file path, matched rule, action, decision, reason, risk level, working directory, and session ID.
 
+> **Note:** The AI security audit (powered by Claude Haiku) is advisory only — it is a supplementary signal, not a guarantee. The audit LLM sees the same transcript context as the coding agent, so prompt injection that caused a dangerous command could also manipulate the audit verdict. Always verify commands yourself.
+
 ## Architecture
 
 ```mermaid

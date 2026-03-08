@@ -2,6 +2,11 @@
 
 All notable changes to claude-gate are documented here.
 
+## [v0.4.2] - 2026-03-08
+
+### Changed
+- **Audit verdict disclaimer**: Added "AI audit is advisory only — verify commands yourself" below audit results. Changed SAFE verdict color from green to blue to avoid false sense of security. (#2)
+
 ## [v0.4.1] - 2026-03-08
 
 ### Fixed
