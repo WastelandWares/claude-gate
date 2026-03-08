@@ -57,5 +57,28 @@ jobs:
           echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['hookSpecificOutput']['permissionDecision'] == 'allow', f'Expected allow, got {d}'"
           echo "PASS: passthrough Write"
 
+          echo "--- Test: custom timeout config ---"
+          cat > ~/.config/claude-gate/rules.toml << 'TOML'
+          [defaults]
+          action = "passthrough"
+          timeout = 30
+          timeout_action = "deny"
+
+          [[rules]]
+          name = "Block: system destruction"
+          tool = "Bash"
+          pattern = 'rm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+|(-[a-zA-Z]*\s+)*)[/~]'
+          action = "deny"
+          reason = "Blocked"
+          risk = "critical"
+          TOML
+
+          RESULT=$(echo '{"tool_name":"Bash","tool_input":{"command":"ls -la"}}' | $BINARY 2>/dev/null)
+          echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['hookSpecificOutput']['permissionDecision'] == 'allow', f'Expected allow, got {d}'"
+          echo "PASS: custom timeout config accepted"
+
+          # Restore default config
+          cp Config/default-rules.toml ~/.config/claude-gate/rules.toml
+
           echo ""
           echo "All tests passed!"

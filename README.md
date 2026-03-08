@@ -111,7 +111,9 @@ Rules live in `~/.config/claude-gate/rules.toml`. They're evaluated top-to-botto
 
 ```toml
 [defaults]
-action = "passthrough"  # what to do when no rule matches
+action = "passthrough"   # what to do when no rule matches
+timeout = 60             # seconds before auto-action on gate windows
+timeout_action = "deny"  # action when timeout expires: deny | passthrough
 
 [[rules]]
 name = "Block: recursive delete of system paths"
@@ -189,7 +191,8 @@ flowchart LR
 - **Touch ID** is tried first
 - **System password** is the automatic fallback (works on Macs without Touch ID)
 - **3 retries** before auto-deny
-- **60-second timeout** to prevent hanging Claude Code sessions
+- **Configurable timeout** (default 60s) with visual countdown in the gate window
+- **Configurable timeout action** — `deny` (default) or `passthrough` when timeout expires
 
 ## Architecture
 

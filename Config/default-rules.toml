@@ -5,6 +5,8 @@
 
 [defaults]
 action = "passthrough"
+timeout = 60            # seconds before auto-action on gate windows
+timeout_action = "deny" # action when timeout expires: deny | passthrough
 
 # ============================================================================
 # HARD BLOCKS — These commands are never allowed

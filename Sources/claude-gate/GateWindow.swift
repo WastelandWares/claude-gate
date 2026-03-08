@@ -3,6 +3,7 @@ import AppKit
 class GateWindow: NSObject, NSWindowDelegate {
     var onAuthenticate: (() -> Void)?
     var onCancel: (() -> Void)?
+    var onTimeout: (() -> Void)?
 
     private let window: NSWindow
     private let errorLabel: NSTextField
@@ -11,7 +12,13 @@ class GateWindow: NSObject, NSWindowDelegate {
     private let stackView: NSStackView
     private var resolved = false
 
-    init(ruleName: String, riskLevel: String, reason: String, commandText: String, workingDirectory: String, justification: String? = nil) {
+    // Countdown
+    private let countdownLabel: NSTextField
+    private var remainingSeconds: Int
+    private var countdownTimer: Timer?
+    private let timeoutActionWord: String
+
+    init(ruleName: String, riskLevel: String, reason: String, commandText: String, workingDirectory: String, justification: String? = nil, timeout: Int = 60, timeoutAction: String = "deny") {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 500, height: 480),
             styleMask: [.titled, .closable],
@@ -50,6 +57,15 @@ class GateWindow: NSObject, NSWindowDelegate {
         let riskLabel = NSTextField(labelWithString: "Risk: \(riskLevel.uppercased())")
         riskLabel.font = NSFont.boldSystemFont(ofSize: 13)
         riskLabel.textColor = riskColor
+
+        // Countdown timer
+        let actionWord = timeoutAction == "passthrough" ? "Auto-allow" : "Auto-deny"
+        let countdownLabel = NSTextField(labelWithString: "\(actionWord) in \(timeout)s")
+        countdownLabel.font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
+        countdownLabel.textColor = .secondaryLabelColor
+        self.countdownLabel = countdownLabel
+        self.remainingSeconds = timeout
+        self.timeoutActionWord = actionWord
 
         // Separator
         let separator = NSBox()
@@ -147,6 +163,7 @@ class GateWindow: NSObject, NSWindowDelegate {
         // Add all views to stack
         stackView.addArrangedSubview(ruleLabel)
         stackView.addArrangedSubview(riskLabel)
+        stackView.addArrangedSubview(countdownLabel)
         stackView.addArrangedSubview(separator)
         stackView.addArrangedSubview(whyHeader)
         stackView.addArrangedSubview(reasonLabel)
@@ -211,8 +228,34 @@ class GateWindow: NSObject, NSWindowDelegate {
         window.makeKeyAndOrderFront(nil)
     }
 
+    func startCountdown() {
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            self.remainingSeconds -= 1
+            if self.remainingSeconds <= 0 {
+                self.countdownTimer?.invalidate()
+                self.countdownTimer = nil
+                if !self.resolved {
+                    self.resolved = true
+                    self.onTimeout?()
+                    self.window.close()
+                }
+            } else {
+                self.countdownLabel.stringValue = "\(self.timeoutActionWord) in \(self.remainingSeconds)s"
+                if self.remainingSeconds <= 10 {
+                    self.countdownLabel.textColor = .systemOrange
+                }
+                if self.remainingSeconds <= 5 {
+                    self.countdownLabel.textColor = .systemRed
+                }
+            }
+        }
+    }
+
     func close() {
         resolved = true
+        countdownTimer?.invalidate()
+        countdownTimer = nil
         window.close()
     }
 
@@ -247,11 +290,15 @@ class GateWindow: NSObject, NSWindowDelegate {
 
     @objc private func authenticateClicked() {
         resolved = true
+        countdownTimer?.invalidate()
+        countdownTimer = nil
         onAuthenticate?()
     }
 
     @objc private func cancelClicked() {
         resolved = true
+        countdownTimer?.invalidate()
+        countdownTimer = nil
         onCancel?()
         window.close()
     }
@@ -259,6 +306,8 @@ class GateWindow: NSObject, NSWindowDelegate {
     // MARK: - NSWindowDelegate
 
     func windowWillClose(_ notification: Notification) {
+        countdownTimer?.invalidate()
+        countdownTimer = nil
         if !resolved {
             resolved = true
             onCancel?()

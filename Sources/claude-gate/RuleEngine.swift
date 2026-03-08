@@ -4,6 +4,8 @@ import TOMLKit
 class RuleEngine {
     let defaultAction: RuleAction
     let rules: [Rule]
+    let timeout: TimeInterval
+    let timeoutAction: RuleAction
 
     init(configPath: String) throws {
         let tomlString = try String(contentsOfFile: configPath, encoding: .utf8)
@@ -16,6 +18,23 @@ class RuleEngine {
             self.defaultAction = action
         } else {
             self.defaultAction = .gate
+        }
+
+        // Parse timeout (default 60 seconds)
+        if let defaults = table["defaults"]?.table,
+           let t = defaults["timeout"]?.int {
+            self.timeout = TimeInterval(t)
+        } else {
+            self.timeout = 60
+        }
+
+        // Parse timeout_action (default deny)
+        if let defaults = table["defaults"]?.table,
+           let actionStr = defaults["timeout_action"]?.string,
+           let action = RuleAction(rawValue: actionStr) {
+            self.timeoutAction = action
+        } else {
+            self.timeoutAction = .deny
         }
 
         // Parse [[rules]] section
