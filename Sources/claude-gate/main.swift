@@ -35,11 +35,14 @@ let (matchedRule, action) = engine.evaluate(input)
 
 switch action {
 case .passthrough:
-    print(HookOutput.allow(reason: matchedRule?.name ?? "No matching rule").toJSON())
+    let reason = matchedRule?.name ?? "No matching rule"
+    AuditLog.shared.log(input: input, rule: matchedRule, action: .passthrough, decision: "allow", reason: reason)
+    print(HookOutput.allow(reason: reason).toJSON())
     exit(0)
 
 case .deny:
     let reason = matchedRule?.reason ?? "Denied by rule"
+    AuditLog.shared.log(input: input, rule: matchedRule, action: .deny, decision: "deny", reason: reason)
     FileHandle.standardError.write(Data("claude-gate: DENIED — \(reason)\n".utf8))
     print(HookOutput.deny(reason: reason).toJSON())
     exit(0)
@@ -124,6 +127,7 @@ case .gate:
         auth.authenticate(reason: "claude-gate: \(rule.name)") { success, errorMessage in
             if success {
                 gateWindow.close()
+                AuditLog.shared.log(input: input, rule: rule, action: .gate, decision: "allow", reason: "Authenticated via Touch ID")
                 respond(output: .allow(reason: "Authenticated via Touch ID"), exitCode: 0)
             } else {
                 gateWindow.showError(errorMessage ?? "Authentication failed")
@@ -132,14 +136,17 @@ case .gate:
     }
 
     gateWindow.onCancel = {
+        AuditLog.shared.log(input: input, rule: rule, action: .gate, decision: "deny", reason: "Authentication cancelled")
         respond(output: .deny(reason: "Authentication cancelled"), exitCode: 0)
     }
 
     gateWindow.onTimeout = {
         switch engine.timeoutAction {
         case .passthrough:
+            AuditLog.shared.log(input: input, rule: rule, action: .gate, decision: "allow", reason: "Timeout — auto-approved by configuration")
             respond(output: .allow(reason: "Timeout — auto-approved by configuration"), exitCode: 0)
         case .deny, .gate:
+            AuditLog.shared.log(input: input, rule: rule, action: .gate, decision: "deny", reason: "Timeout — no response within \(timeoutSeconds)s")
             respond(output: .deny(reason: "Timeout — no response within \(timeoutSeconds)s"), exitCode: 0)
         }
     }

@@ -194,6 +194,16 @@ flowchart LR
 - **Configurable timeout** (default 60s) with visual countdown in the gate window
 - **Configurable timeout action** — `deny` (default) or `passthrough` when timeout expires
 
+## Audit Log
+
+Every decision (passthrough, deny, gate result) is appended to `~/.config/claude-gate/audit.jsonl` as a JSON Lines file:
+
+```json
+{"command":"rm -rf /","decision":"deny","reason":"This command would recursively delete system-level or home directory files.","risk":"critical","rule_action":"deny","rule_name":"Block: recursive delete of system/home paths","timestamp":"2026-03-08T00:39:51.201Z","tool_name":"Bash"}
+```
+
+Each entry includes: timestamp, tool name, command/file path, matched rule, action, decision, reason, risk level, working directory, and session ID.
+
 ## Architecture
 
 ```mermaid

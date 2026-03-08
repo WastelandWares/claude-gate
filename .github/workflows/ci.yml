@@ -80,5 +80,21 @@ jobs:
           # Restore default config
           cp Config/default-rules.toml ~/.config/claude-gate/rules.toml
 
+          echo "--- Test: audit log ---"
+          rm -f ~/.config/claude-gate/audit.jsonl
+          echo '{"tool_name":"Bash","tool_input":{"command":"ls -la"}}' | $BINARY 2>/dev/null > /dev/null
+          echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | $BINARY 2>/dev/null > /dev/null
+          python3 -c "
+          import json
+          with open('$HOME/.config/claude-gate/audit.jsonl') as f:
+              lines = [json.loads(l) for l in f if l.strip()]
+          assert len(lines) == 2, f'Expected 2 audit entries, got {len(lines)}'
+          assert lines[0]['decision'] == 'allow', f'Expected allow, got {lines[0]}'
+          assert lines[1]['decision'] == 'deny', f'Expected deny, got {lines[1]}'
+          assert lines[1]['rule_name'] is not None, 'Expected rule_name in deny entry'
+          assert 'timestamp' in lines[0], 'Expected timestamp field'
+          "
+          echo "PASS: audit log entries written correctly"
+
           echo ""
           echo "All tests passed!"
