@@ -1,4 +1,5 @@
 import Foundation
+import ClaudeGateCore
 
 /// Asks Claude to explain why it needs to run a gated command,
 /// using the session transcript for context.

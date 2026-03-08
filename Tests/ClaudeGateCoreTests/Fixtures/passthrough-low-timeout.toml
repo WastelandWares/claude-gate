@@ -1,0 +1,4 @@
+[defaults]
+action = "passthrough"
+timeout = 10
+timeout_action = "passthrough"

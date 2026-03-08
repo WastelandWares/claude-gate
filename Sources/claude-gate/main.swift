@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import ClaudeGateCore
 
 // Read all JSON from stdin (readDataToEndOfFile ensures we get everything)
 let inputData = FileHandle.standardInput.readDataToEndOfFile()
