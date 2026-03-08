@@ -73,19 +73,19 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
 
-          gh release create "$VERSION" \
-            --title "claude-gate $VERSION" \
-            --notes "$(cat <<EOF
+          # Build release notes with version substituted
+          # Use single-quoted heredoc to prevent backtick/variable expansion
+          cat <<'NOTES_TEMPLATE' | sed "s|__VERSION__|${VERSION}|g" > /tmp/release-notes.md
           ## Install
 
           ### Quick install (download binary)
           ```bash
           # Download the binary
-          curl -L https://github.com/severeon/claude-gate/releases/download/$VERSION/claude-gate-$VERSION-macos-arm64 -o /usr/local/bin/claude-gate
+          curl -L https://github.com/severeon/claude-gate/releases/download/__VERSION__/claude-gate-__VERSION__-macos-arm64 -o /usr/local/bin/claude-gate
           chmod +x /usr/local/bin/claude-gate
 
           # Download and seed default rules
-          curl -L https://github.com/severeon/claude-gate/releases/download/$VERSION/claude-gate-$VERSION-macos-arm64.tar.gz | tar xz -C /tmp default-rules.toml
+          curl -L https://github.com/severeon/claude-gate/releases/download/__VERSION__/claude-gate-__VERSION__-macos-arm64.tar.gz | tar xz -C /tmp default-rules.toml
           mkdir -p ~/.config/claude-gate
           cp /tmp/default-rules.toml ~/.config/claude-gate/rules.toml
           ```
@@ -111,7 +111,10 @@ jobs:
           ```
 
           See [README](https://github.com/severeon/claude-gate#readme) for full documentation.
-          EOF
-          )" \
+          NOTES_TEMPLATE
+
+          gh release create "$VERSION" \
+            --title "claude-gate $VERSION" \
+            --notes-file /tmp/release-notes.md \
             claude-gate-${VERSION}-macos-arm64.tar.gz \
             claude-gate-${VERSION}-macos-arm64
