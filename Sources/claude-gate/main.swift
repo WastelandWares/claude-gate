@@ -104,13 +104,18 @@ case .gate:
         }
     }
 
+    let timeoutSeconds = Int(engine.timeout)
+    let timeoutActionStr = engine.timeoutAction == .passthrough ? "passthrough" : "deny"
+
     let gateWindow = GateWindow(
         ruleName: rule.name,
         riskLevel: rule.risk.rawValue,
         reason: rule.reason,
         commandText: displayText,
         workingDirectory: cwd,
-        justification: input.toolDescription
+        justification: input.toolDescription,
+        timeout: timeoutSeconds,
+        timeoutAction: timeoutActionStr
     )
 
     let auth = BiometricAuth()
@@ -130,6 +135,15 @@ case .gate:
         respond(output: .deny(reason: "Authentication cancelled"), exitCode: 0)
     }
 
+    gateWindow.onTimeout = {
+        switch engine.timeoutAction {
+        case .passthrough:
+            respond(output: .allow(reason: "Timeout — auto-approved by configuration"), exitCode: 0)
+        case .deny, .gate:
+            respond(output: .deny(reason: "Timeout — no response within \(timeoutSeconds)s"), exitCode: 0)
+        }
+    }
+
     // Kick off security audit in background (non-blocking)
     SecurityAudit.run(input: input, ruleName: rule.name, ruleReason: rule.reason) { result in
         // Guard: don't update UI if the window has already been resolved
@@ -146,6 +160,7 @@ case .gate:
     }
 
     gateWindow.show()
+    gateWindow.startCountdown()
     app.activate(ignoringOtherApps: true)
     app.run()
 

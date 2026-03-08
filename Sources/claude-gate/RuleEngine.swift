@@ -4,6 +4,8 @@ import TOMLKit
 class RuleEngine {
     let defaultAction: RuleAction
     let rules: [Rule]
+    let timeoutAction: RuleAction
+    private(set) var timeout: TimeInterval
 
     init(configPath: String) throws {
         let tomlString = try String(contentsOfFile: configPath, encoding: .utf8)
@@ -16,6 +18,36 @@ class RuleEngine {
             self.defaultAction = action
         } else {
             self.defaultAction = .gate
+        }
+
+        // Parse timeout (default 60 seconds, minimum 5 seconds)
+        if let defaults = table["defaults"]?.table,
+           let t = defaults["timeout"]?.int {
+            self.timeout = TimeInterval(max(t, 5))
+            if t < 5 {
+                FileHandle.standardError.write(
+                    Data("claude-gate: Warning: timeout clamped to minimum 5 seconds (was \(t))\n".utf8)
+                )
+            }
+        } else {
+            self.timeout = 60
+        }
+
+        // Parse timeout_action (default deny)
+        if let defaults = table["defaults"]?.table,
+           let actionStr = defaults["timeout_action"]?.string,
+           let action = RuleAction(rawValue: actionStr) {
+            self.timeoutAction = action
+        } else {
+            self.timeoutAction = .deny
+        }
+
+        // Safety: passthrough on timeout can bypass auth — enforce minimum 30s
+        if self.timeoutAction == .passthrough && self.timeout < 30 {
+            FileHandle.standardError.write(
+                Data("claude-gate: Warning: timeout clamped to 30s because timeout_action is passthrough (auto-approve)\n".utf8)
+            )
+            self.timeout = 30
         }
 
         // Parse [[rules]] section
