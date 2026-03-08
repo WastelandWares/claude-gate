@@ -2,6 +2,11 @@
 
 All notable changes to claude-gate are documented here.
 
+## [v0.7.0] - 2026-03-08
+
+### Added
+- **Grace windows**: After authenticating for a gate rule, approval can be cached for a configurable period. Add `grace_period = 300` (seconds) to any rule in rules.toml. Default is 0 (always re-auth). Grace cache stored in `~/.config/claude-gate/grace.json`. (#5)
+
 ## [v0.6.0] - 2026-03-08
 
 ### Added

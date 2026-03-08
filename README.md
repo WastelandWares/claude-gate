@@ -162,6 +162,7 @@ risk = "medium"
 | `action` | `passthrough`, `gate`, or `deny` |
 | `reason` | Explanation shown in the gate window |
 | `risk` | `critical`, `high`, `medium`, or `low` — affects UI color coding |
+| `grace_period` | Seconds to cache approval after authentication (default: 0 = always re-auth) |
 
 ### Default rules
 

@@ -28,6 +28,7 @@ pattern = '(npm|yarn|pnpm|bun)\s+(install|add|i\b)'
 action = "gate"
 reason = "Installing packages pulls third-party code"
 risk = "medium"
+grace_period = 300
 
 [[rules]]
 name = "Gate: env files"

@@ -21,4 +21,5 @@ public struct Rule {
     public let action: RuleAction
     public let reason: String
     public let risk: RiskLevel
+    public let gracePeriod: TimeInterval  // seconds, 0 = always re-auth
 }
