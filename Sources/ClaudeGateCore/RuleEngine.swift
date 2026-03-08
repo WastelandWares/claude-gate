@@ -90,6 +90,7 @@ public class RuleEngine {
 
                 let pattern = ruleTable["pattern"]?.string
                 let pathPattern = ruleTable["path_pattern"]?.string
+                let gracePeriod = TimeInterval(ruleTable["grace_period"]?.int ?? 0)
 
                 let rule = Rule(
                     name: name,
@@ -98,7 +99,8 @@ public class RuleEngine {
                     pathPattern: pathPattern,
                     action: action,
                     reason: reason,
-                    risk: risk
+                    risk: risk,
+                    gracePeriod: gracePeriod
                 )
                 parsedRules.append(rule)
             }

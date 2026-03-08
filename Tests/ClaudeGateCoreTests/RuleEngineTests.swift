@@ -170,6 +170,20 @@ final class RuleEngineTests: XCTestCase {
         XCTAssertFalse(engine.voiceEnabled)
     }
 
+    func testGracePeriodParsing() throws {
+        let engine = try RuleEngine(configPath: fixturePath("test-rules"))
+        let npmRule = engine.rules.first { $0.name == "Gate: npm install" }
+        XCTAssertNotNil(npmRule)
+        XCTAssertEqual(npmRule?.gracePeriod, 300)
+    }
+
+    func testGracePeriodDefaultsToZero() throws {
+        let engine = try RuleEngine(configPath: fixturePath("test-rules"))
+        let forceRule = engine.rules.first { $0.name == "Gate: force push" }
+        XCTAssertNotNil(forceRule)
+        XCTAssertEqual(forceRule?.gracePeriod, 0)
+    }
+
     func testAuditDisabledByDefault() throws {
         let engine = try RuleEngine(configPath: fixturePath("test-rules"))
         XCTAssertFalse(engine.auditEnabled)

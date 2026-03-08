@@ -57,6 +57,13 @@ case .gate:
         exit(0)
     }
 
+    // Check grace cache — skip gate if recently approved
+    if rule.gracePeriod > 0 && GraceCache.shared.hasValidGrace(ruleName: rule.name) {
+        AuditLog.shared.log(input: input, rule: rule, action: .gate, decision: "allow", reason: "Grace period active")
+        print(HookOutput.allow(reason: "Grace period active for \(rule.name)").toJSON())
+        exit(0)
+    }
+
     // Determine the command/content text to display
     let displayText: String
     if let cmd = input.command {
@@ -136,6 +143,7 @@ case .gate:
         auth.authenticate(reason: "claude-gate: \(rule.name)") { success, errorMessage in
             if success {
                 gateWindow.close()
+                GraceCache.shared.recordApproval(ruleName: rule.name, gracePeriod: rule.gracePeriod)
                 AuditLog.shared.log(input: input, rule: rule, action: .gate, decision: "allow", reason: "Authenticated via Touch ID")
                 respond(output: .allow(reason: "Authenticated via Touch ID"), exitCode: 0)
             } else {
