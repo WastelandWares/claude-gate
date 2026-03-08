@@ -2,6 +2,11 @@
 
 All notable changes to claude-gate are documented here.
 
+## [v0.4.1] - 2026-03-08
+
+### Fixed
+- **Symlink resolution in transcript path validation**: Both `SecurityAudit.swift` and `Justification.swift` now resolve symlinks before validating that transcript paths are within `~/.claude/`. Previously, a symlink inside `~/.claude/` pointing elsewhere could bypass the path check. (#7)
+
 ## [v0.4.0] - 2026-03-08
 
 ### Added
