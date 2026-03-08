@@ -32,6 +32,7 @@ class AuditLog {
     static let shared = AuditLog()
 
     private let logPath: String
+    private let queue = DispatchQueue(label: "com.claude-gate.audit")
 
     private init() {
         let configDir = NSString("~/.config/claude-gate").expandingTildeInPath
@@ -60,22 +61,33 @@ class AuditLog {
         encoder.outputFormatting = .sortedKeys
         guard let data = try? encoder.encode(entry),
               var line = String(data: data, encoding: .utf8) else {
+            FileHandle.standardError.write(Data("claude-gate: WARNING — failed to encode audit log entry\n".utf8))
             return
         }
         line += "\n"
 
-        // Append to file, creating if needed
+        queue.sync {
+            writeEntry(line)
+        }
+    }
+
+    private func writeEntry(_ line: String) {
         if FileManager.default.fileExists(atPath: logPath) {
-            if let handle = FileHandle(forWritingAtPath: logPath) {
-                handle.seekToEndOfFile()
-                handle.write(Data(line.utf8))
-                handle.closeFile()
+            guard let handle = FileHandle(forWritingAtPath: logPath) else {
+                FileHandle.standardError.write(Data("claude-gate: WARNING — failed to open audit log for writing\n".utf8))
+                return
             }
+            defer { handle.closeFile() }
+            handle.seekToEndOfFile()
+            handle.write(Data(line.utf8))
         } else {
-            // Ensure directory exists
             let dir = (logPath as NSString).deletingLastPathComponent
-            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
-            try? line.write(toFile: logPath, atomically: true, encoding: .utf8)
+            do {
+                try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+                try line.write(toFile: logPath, atomically: false, encoding: .utf8)
+            } catch {
+                FileHandle.standardError.write(Data("claude-gate: WARNING — failed to create audit log: \(error.localizedDescription)\n".utf8))
+            }
         }
     }
 }
