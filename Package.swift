@@ -8,13 +8,24 @@ let package = Package(
         .package(url: "https://github.com/LebJe/TOMLKit.git", from: "0.6.0"),
     ],
     targets: [
+        .target(
+            name: "ClaudeGateCore",
+            dependencies: ["TOMLKit"]
+        ),
         .executableTarget(
             name: "claude-gate",
-            dependencies: ["TOMLKit"],
+            dependencies: ["ClaudeGateCore", "TOMLKit"],
             linkerSettings: [
                 .linkedFramework("LocalAuthentication"),
                 .linkedFramework("AppKit"),
                 .linkedFramework("UserNotifications"),
+            ]
+        ),
+        .testTarget(
+            name: "ClaudeGateCoreTests",
+            dependencies: ["ClaudeGateCore"],
+            resources: [
+                .copy("Fixtures"),
             ]
         ),
     ]

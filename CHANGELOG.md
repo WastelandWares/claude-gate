@@ -2,6 +2,13 @@
 
 All notable changes to claude-gate are documented here.
 
+## [v0.6.0] - 2026-03-08
+
+### Added
+- **Unit tests**: 27 XCTest cases covering rule evaluation, path pattern matching, first-match-wins, timeout clamping, config parsing, malformed config handling, fail-closed behavior, and HookInput/HookOutput serialization. (#6)
+- **Library target**: Extracted core types (RuleEngine, Rule, HookInput, HookOutput) into `ClaudeGateCore` library target for testability.
+- **CI unit tests**: `swift test` now runs in CI alongside integration tests.
+
 ## [v0.5.1] - 2026-03-08
 
 ### Fixed

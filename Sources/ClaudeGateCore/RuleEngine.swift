@@ -1,15 +1,15 @@
 import Foundation
 import TOMLKit
 
-class RuleEngine {
-    let defaultAction: RuleAction
-    let rules: [Rule]
-    let timeoutAction: RuleAction
-    let voiceEnabled: Bool
-    let auditEnabled: Bool
-    private(set) var timeout: TimeInterval
+public class RuleEngine {
+    public let defaultAction: RuleAction
+    public let rules: [Rule]
+    public let timeoutAction: RuleAction
+    public let voiceEnabled: Bool
+    public let auditEnabled: Bool
+    public private(set) var timeout: TimeInterval
 
-    init(configPath: String) throws {
+    public init(configPath: String) throws {
         let tomlString = try String(contentsOfFile: configPath, encoding: .utf8)
         let table = try TOMLTable(string: tomlString)
 
@@ -106,7 +106,7 @@ class RuleEngine {
         self.rules = parsedRules
     }
 
-    func evaluate(_ input: HookInput) -> (Rule?, RuleAction) {
+    public func evaluate(_ input: HookInput) -> (Rule?, RuleAction) {
         let matchingRules = rules.filter { $0.tool == input.toolName }
 
         for rule in matchingRules {

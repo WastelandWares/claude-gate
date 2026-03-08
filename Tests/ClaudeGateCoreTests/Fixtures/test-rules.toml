@@ -1,0 +1,46 @@
+[defaults]
+action = "passthrough"
+timeout = 60
+timeout_action = "deny"
+voice = false
+audit = false
+
+[[rules]]
+name = "Block: rm -rf /"
+tool = "Bash"
+pattern = 'rm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+|(-[a-zA-Z]*\s+)*)[/~]'
+action = "deny"
+reason = "Recursive delete of system paths"
+risk = "critical"
+
+[[rules]]
+name = "Gate: force push"
+tool = "Bash"
+pattern = 'git\s+push\s+.*--force'
+action = "gate"
+reason = "Force push rewrites remote history"
+risk = "high"
+
+[[rules]]
+name = "Gate: npm install"
+tool = "Bash"
+pattern = '(npm|yarn|pnpm|bun)\s+(install|add|i\b)'
+action = "gate"
+reason = "Installing packages pulls third-party code"
+risk = "medium"
+
+[[rules]]
+name = "Gate: env files"
+tool = "Write"
+path_pattern = '\.env'
+action = "gate"
+reason = "Writing to environment files"
+risk = "high"
+
+[[rules]]
+name = "Gate: ssh config"
+tool = "Edit"
+path_pattern = '\.ssh/'
+action = "gate"
+reason = "Modifying SSH configuration"
+risk = "high"

@@ -1,0 +1,12 @@
+[defaults]
+action = "gate"
+timeout = 120
+timeout_action = "passthrough"
+
+[[rules]]
+name = "Allow: ls"
+tool = "Bash"
+pattern = '^ls\b'
+action = "passthrough"
+reason = "Listing files is safe"
+risk = "low"

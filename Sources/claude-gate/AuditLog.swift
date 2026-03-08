@@ -1,4 +1,5 @@
 import Foundation
+import ClaudeGateCore
 
 struct AuditEntry: Codable {
     let timestamp: String

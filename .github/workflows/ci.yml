@@ -19,7 +19,10 @@ jobs:
       - name: Build (release)
         run: swift build --configuration release 2>&1
 
-      - name: Test rule engine
+      - name: Run unit tests
+        run: swift test 2>&1
+
+      - name: Test rule engine (integration)
         run: |
           # Seed config for tests
           mkdir -p ~/.config/claude-gate

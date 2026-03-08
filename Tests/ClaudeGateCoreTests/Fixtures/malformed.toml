@@ -1,0 +1,7 @@
+[defaults]
+action = "passthrough"
+
+[[rules]]
+name = "Missing fields"
+tool = "Bash"
+action = "deny"

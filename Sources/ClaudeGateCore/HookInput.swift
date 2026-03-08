@@ -1,14 +1,14 @@
 import Foundation
 
-struct HookInput: Codable {
-    let sessionId: String?
-    let toolName: String
-    let toolInput: [String: AnyCodable]
-    let cwd: String?
-    let permissionMode: String?
-    let hookEventName: String?
+public struct HookInput: Codable {
+    public let sessionId: String?
+    public let toolName: String
+    public let toolInput: [String: AnyCodable]
+    public let cwd: String?
+    public let permissionMode: String?
+    public let hookEventName: String?
 
-    let transcriptPath: String?
+    public let transcriptPath: String?
 
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
@@ -20,20 +20,20 @@ struct HookInput: Codable {
         case transcriptPath = "transcript_path"
     }
 
-    var command: String? {
+    public var command: String? {
         toolInput["command"]?.stringValue
     }
 
-    var filePath: String? {
+    public var filePath: String? {
         toolInput["file_path"]?.stringValue
     }
 
     /// Claude's description of what the command does (Bash tool_input.description)
-    var toolDescription: String? {
+    public var toolDescription: String? {
         toolInput["description"]?.stringValue
     }
 
-    var toolInputAsString: String {
+    public var toolInputAsString: String {
         if let data = try? JSONEncoder().encode(toolInput),
            let str = String(data: data, encoding: .utf8) {
             return str
@@ -43,18 +43,18 @@ struct HookInput: Codable {
 }
 
 /// Type-erased Codable wrapper for JSON values
-struct AnyCodable: Codable {
-    let value: Any
+public struct AnyCodable: Codable {
+    public let value: Any
 
-    var stringValue: String? {
+    public var stringValue: String? {
         value as? String
     }
 
-    init(_ value: Any) {
+    public init(_ value: Any) {
         self.value = value
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if let str = try? container.decode(String.self) {
             value = str
@@ -75,7 +75,7 @@ struct AnyCodable: Codable {
         }
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch value {
         case let str as String: try container.encode(str)

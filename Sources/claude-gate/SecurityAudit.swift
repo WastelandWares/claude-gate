@@ -1,4 +1,5 @@
 import Foundation
+import ClaudeGateCore
 
 /// Runs an independent security audit of a gated command by calling the Anthropic API
 /// with the session transcript context and a security-focused system prompt.

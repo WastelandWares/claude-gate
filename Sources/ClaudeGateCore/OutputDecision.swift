@@ -1,15 +1,15 @@
 import Foundation
 
-struct HookOutput: Codable {
-    let hookSpecificOutput: HookSpecificOutput
+public struct HookOutput: Codable {
+    public let hookSpecificOutput: HookSpecificOutput
 
-    struct HookSpecificOutput: Codable {
-        let hookEventName: String
-        let permissionDecision: String
-        let permissionDecisionReason: String?
+    public struct HookSpecificOutput: Codable {
+        public let hookEventName: String
+        public let permissionDecision: String
+        public let permissionDecisionReason: String?
     }
 
-    static func allow(reason: String? = nil) -> HookOutput {
+    public static func allow(reason: String? = nil) -> HookOutput {
         HookOutput(hookSpecificOutput: HookSpecificOutput(
             hookEventName: "PreToolUse",
             permissionDecision: "allow",
@@ -17,7 +17,7 @@ struct HookOutput: Codable {
         ))
     }
 
-    static func deny(reason: String) -> HookOutput {
+    public static func deny(reason: String) -> HookOutput {
         HookOutput(hookSpecificOutput: HookSpecificOutput(
             hookEventName: "PreToolUse",
             permissionDecision: "deny",
@@ -25,7 +25,7 @@ struct HookOutput: Codable {
         ))
     }
 
-    func toJSON() -> String {
+    public func toJSON() -> String {
         let encoder = JSONEncoder()
         guard let data = try? encoder.encode(self),
               let str = String(data: data, encoding: .utf8) else {

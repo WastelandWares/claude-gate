@@ -1,4 +1,5 @@
 import Foundation
+import ClaudeGateCore
 
 /// Appends new rules to the user's rules.toml config file.
 class RuleWriter {
