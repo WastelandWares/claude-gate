@@ -140,6 +140,38 @@ case .gate:
         respond(output: .deny(reason: "Authentication cancelled"), exitCode: 0)
     }
 
+    gateWindow.onAlwaysAllow = {
+        let success = RuleWriter.addRule(
+            action: .passthrough,
+            toolName: input.toolName,
+            command: input.command,
+            filePath: input.filePath,
+            cwd: input.cwd,
+            originalRuleName: rule.name
+        )
+        let reason = success
+            ? "Always allow rule created — command approved"
+            : "Failed to create rule — command approved this time"
+        AuditLog.shared.log(input: input, rule: rule, action: .gate, decision: "allow", reason: reason)
+        respond(output: .allow(reason: reason), exitCode: 0)
+    }
+
+    gateWindow.onAlwaysDeny = {
+        let success = RuleWriter.addRule(
+            action: .deny,
+            toolName: input.toolName,
+            command: input.command,
+            filePath: input.filePath,
+            cwd: input.cwd,
+            originalRuleName: rule.name
+        )
+        let reason = success
+            ? "Always deny rule created — command denied"
+            : "Failed to create rule — command denied this time"
+        AuditLog.shared.log(input: input, rule: rule, action: .gate, decision: "deny", reason: reason)
+        respond(output: .deny(reason: reason), exitCode: 0)
+    }
+
     gateWindow.onTimeout = {
         switch engine.timeoutAction {
         case .passthrough:

@@ -4,6 +4,8 @@ class GateWindow: NSObject, NSWindowDelegate {
     var onAuthenticate: (() -> Void)?
     var onCancel: (() -> Void)?
     var onTimeout: (() -> Void)?
+    var onAlwaysAllow: (() -> Void)?
+    var onAlwaysDeny: (() -> Void)?
 
     private let window: NSWindow
     private let errorLabel: NSTextField
@@ -155,6 +157,18 @@ class GateWindow: NSObject, NSWindowDelegate {
         buttonBar.orientation = .horizontal
         buttonBar.spacing = 12
 
+        // Persistent rule buttons
+        let alwaysAllowButton = NSButton(title: "Always Allow", target: nil, action: nil)
+        alwaysAllowButton.bezelStyle = .rounded
+        alwaysAllowButton.contentTintColor = .systemGreen
+        let alwaysDenyButton = NSButton(title: "Always Deny", target: nil, action: nil)
+        alwaysDenyButton.bezelStyle = .rounded
+        alwaysDenyButton.contentTintColor = .systemRed
+
+        let persistBar = NSStackView(views: [alwaysDenyButton, alwaysAllowButton])
+        persistBar.orientation = .horizontal
+        persistBar.spacing = 12
+
         // Spacer view
         let spacer = NSView()
         spacer.translatesAutoresizingMaskIntoConstraints = false
@@ -179,10 +193,12 @@ class GateWindow: NSObject, NSWindowDelegate {
         stackView.addArrangedSubview(auditLabel)
         stackView.addArrangedSubview(spacer)
         stackView.addArrangedSubview(errorLabel)
+        stackView.addArrangedSubview(persistBar)
         stackView.addArrangedSubview(buttonBar)
 
-        // Right-align button bar
+        // Layout hints
         buttonBar.translatesAutoresizingMaskIntoConstraints = false
+        persistBar.translatesAutoresizingMaskIntoConstraints = false
 
         window.contentView = stackView
 
@@ -203,6 +219,8 @@ class GateWindow: NSObject, NSWindowDelegate {
             auditLabel.widthAnchor.constraint(equalTo: stackView.widthAnchor, constant: -40),
 
             buttonBar.trailingAnchor.constraint(equalTo: stackView.trailingAnchor, constant: -20),
+
+            persistBar.leadingAnchor.constraint(equalTo: stackView.leadingAnchor, constant: 20),
         ])
 
         // Constrain justification label width if present
@@ -222,6 +240,10 @@ class GateWindow: NSObject, NSWindowDelegate {
         cancelButton.action = #selector(cancelClicked)
         authButton.target = self
         authButton.action = #selector(authenticateClicked)
+        alwaysAllowButton.target = self
+        alwaysAllowButton.action = #selector(alwaysAllowClicked)
+        alwaysDenyButton.target = self
+        alwaysDenyButton.action = #selector(alwaysDenyClicked)
     }
 
     func show() {
@@ -293,6 +315,22 @@ class GateWindow: NSObject, NSWindowDelegate {
         countdownTimer?.invalidate()
         countdownTimer = nil
         onAuthenticate?()
+    }
+
+    @objc private func alwaysAllowClicked() {
+        resolved = true
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+        onAlwaysAllow?()
+        window.close()
+    }
+
+    @objc private func alwaysDenyClicked() {
+        resolved = true
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+        onAlwaysDeny?()
+        window.close()
     }
 
     @objc private func cancelClicked() {

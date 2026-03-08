@@ -93,7 +93,8 @@ block-beta
         E["AGENT JUSTIFICATION:\nPushing the rebased feature branch to update the PR"]
         F["COMMAND:\ngit push --force origin feature-branch"]
         G["WORKING DIRECTORY:\n/Users/you/projects/my-app"]
-        H["[ Cancel ]  [ Authenticate ]"]
+        H["[ Always Deny ]  [ Always Allow ]"]
+        I["[ Cancel ]  [ Authenticate ]"]
     end
 
     style A fill:#333,color:#fff
@@ -104,6 +105,10 @@ block-beta
 ```
 
 The **Agent Justification** field shows Claude's own `description` of why it's using the tool, giving you context for your decision.
+
+### Persistent Rules
+
+The **Always Allow** and **Always Deny** buttons create a permanent rule in your `rules.toml` for the exact command. The rule is inserted at the top of the rules list so it takes priority (first-match-wins). This eliminates repeated prompts for trusted or forbidden commands.
 
 ## Rules
 
