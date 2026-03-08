@@ -141,28 +141,35 @@ case .gate:
     }
 
     gateWindow.onAlwaysAllow = {
-        let success = RuleWriter.addRule(
-            action: .passthrough,
-            toolName: input.toolName,
-            command: input.command,
-            filePath: input.filePath,
-            cwd: input.cwd,
-            originalRuleName: rule.name
-        )
-        let reason = success
-            ? "Always allow rule created — command approved"
-            : "Failed to create rule — command approved this time"
-        AuditLog.shared.log(input: input, rule: rule, action: .gate, decision: "allow", reason: reason)
-        respond(output: .allow(reason: reason), exitCode: 0)
+        // Require biometric auth before creating a permanent passthrough rule
+        auth.authenticate(reason: "claude-gate: Create permanent allow rule") { success, errorMessage in
+            if success {
+                gateWindow.close()
+                let ruleSuccess = RuleWriter.addRule(
+                    action: .passthrough,
+                    toolName: input.toolName,
+                    command: input.command,
+                    filePath: input.filePath,
+                    originalRuleName: rule.name
+                )
+                let reason = ruleSuccess
+                    ? "Always allow rule created — command approved"
+                    : "Failed to create rule — command approved this time"
+                AuditLog.shared.log(input: input, rule: rule, action: .gate, decision: "allow", reason: reason)
+                respond(output: .allow(reason: reason), exitCode: 0)
+            } else {
+                gateWindow.showError(errorMessage ?? "Authentication required to create permanent rule")
+            }
+        }
     }
 
     gateWindow.onAlwaysDeny = {
+        // No auth needed to deny — denying is always safe
         let success = RuleWriter.addRule(
             action: .deny,
             toolName: input.toolName,
             command: input.command,
             filePath: input.filePath,
-            cwd: input.cwd,
             originalRuleName: rule.name
         )
         let reason = success
