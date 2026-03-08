@@ -9,6 +9,7 @@ timeout = 60            # seconds before auto-action on gate windows (minimum: 5
 timeout_action = "deny" # action when timeout expires: deny | passthrough
                         # WARNING: passthrough auto-approves without auth (minimum 30s enforced)
 voice = false           # enable text-to-speech announcements for gate events
+audit = false           # enable AI security audit (sends command + transcript to Anthropic API)
 
 # ============================================================================
 # HARD BLOCKS — These commands are never allowed

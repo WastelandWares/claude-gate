@@ -215,19 +215,23 @@ case .gate:
         }
     }
 
-    // Kick off security audit in background (non-blocking)
-    SecurityAudit.run(input: input, ruleName: rule.name, ruleReason: rule.reason) { result in
-        // Guard: don't update UI if the window has already been resolved
-        respondLock.lock()
-        let alreadyDone = hasResponded
-        respondLock.unlock()
-        guard !alreadyDone else { return }
+    // Kick off security audit in background (non-blocking, opt-in)
+    if engine.auditEnabled {
+        SecurityAudit.run(input: input, ruleName: rule.name, ruleReason: rule.reason) { result in
+            // Guard: don't update UI if the window has already been resolved
+            respondLock.lock()
+            let alreadyDone = hasResponded
+            respondLock.unlock()
+            guard !alreadyDone else { return }
 
-        if let result = result {
-            gateWindow.showAuditResult(verdict: result.verdict.rawValue, analysis: result.analysis)
-        } else {
-            gateWindow.showAuditUnavailable()
+            if let result = result {
+                gateWindow.showAuditResult(verdict: result.verdict.rawValue, analysis: result.analysis)
+            } else {
+                gateWindow.showAuditUnavailable()
+            }
         }
+    } else {
+        gateWindow.showAuditUnavailable()
     }
 
     gateWindow.show()

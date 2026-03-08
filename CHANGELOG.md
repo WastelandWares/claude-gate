@@ -2,6 +2,12 @@
 
 All notable changes to claude-gate are documented here.
 
+## [v0.5.0] - 2026-03-08
+
+### Changed
+- **Audit is now opt-in**: Security audit disabled by default. Enable with `audit = true` in `[defaults]` section of rules.toml. Previously, audit ran automatically whenever `ANTHROPIC_API_KEY` was set. (#3)
+- **Separate API key support**: `CLAUDE_GATE_API_KEY` env var is checked first, falling back to `ANTHROPIC_API_KEY`. Applies to both security audit and justification features. (#3)
+
 ## [v0.4.2] - 2026-03-08
 
 ### Changed

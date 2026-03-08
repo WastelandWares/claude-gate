@@ -21,7 +21,8 @@ class SecurityAudit {
         ruleReason: String,
         completion: @escaping (AuditResult?) -> Void
     ) {
-        guard let apiKey = ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] else {
+        guard let apiKey = ProcessInfo.processInfo.environment["CLAUDE_GATE_API_KEY"]
+            ?? ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] else {
             completion(nil)
             return
         }
