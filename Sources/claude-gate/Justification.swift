@@ -60,8 +60,8 @@ class Justification {
     private static func readTranscriptTail(path: String?, maxLines: Int) -> String {
         guard let path = path else { return "[no transcript available]" }
 
-        let expandedPath = NSString(string: path).standardizingPath
-        let claudeDir = NSString(string: "~/.claude").expandingTildeInPath
+        let expandedPath = URL(fileURLWithPath: NSString(string: path).standardizingPath).resolvingSymlinksInPath().path
+        let claudeDir = URL(fileURLWithPath: NSString(string: "~/.claude").expandingTildeInPath).resolvingSymlinksInPath().path
         guard expandedPath.hasPrefix(claudeDir) else {
             return "[transcript path outside expected directory]"
         }
