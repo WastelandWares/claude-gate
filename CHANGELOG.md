@@ -2,6 +2,13 @@
 
 All notable changes to claude-gate are documented here.
 
+## [v0.8.0] - 2026-03-09
+
+### Added
+- **Production SSH gating**: SSH to `turtles-admin` always requires authentication with `grace_period = 0` (no cached approval). Rule placed before generic SSH rule for first-match priority. Risk level: critical. (#12)
+- **Demo CLI tool**: `demo.sh` script with 13 test scenarios (force-push, env-file, ssh-production, ssh-generic, pip-install, npm-install, sudo, write-dotfile, hard-reset, curl-pipe, fork-bomb, rm-rf, deploy). Interactive menu or direct `./demo.sh [scenario]` invocation. (#14)
+- **Separate API key**: `CLAUDE_GATE_API_KEY` environment variable for project-specific Anthropic API key, separate from the main `ANTHROPIC_API_KEY`. (#13)
+
 ## [v0.7.0] - 2026-03-08
 
 ### Added
