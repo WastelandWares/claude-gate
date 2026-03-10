@@ -232,6 +232,15 @@ reason = "This command makes an outbound network request."
 risk = "medium"
 
 [[rules]]
+name = "Gate: SSH to production server (always prompt)"
+tool = "Bash"
+pattern = 'ssh\s+.*turtles-admin'
+action = "gate"
+reason = "SSH to production server (turtles-admin) always requires explicit approval."
+risk = "critical"
+grace_period = 0
+
+[[rules]]
 name = "Gate: SSH connections"
 tool = "Bash"
 pattern = 'ssh\s+[^-]'
