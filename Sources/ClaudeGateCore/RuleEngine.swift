@@ -169,9 +169,11 @@ public class RuleEngine {
         if !pattern.contains("*") {
             return pattern == toolName
         }
-        // Convert glob pattern to regex: escape dots, replace * with .*
-        let escaped = pattern.replacingOccurrences(of: ".", with: "\\.")
-        let regexPattern = "^" + escaped.replacingOccurrences(of: "*", with: ".*") + "$"
+        // Convert glob to regex safely:
+        // 1. Escape ALL regex metacharacters using NSRegularExpression
+        // 2. Then convert escaped glob wildcards (\*) back to regex (.*)
+        let escaped = NSRegularExpression.escapedPattern(for: pattern)
+        let regexPattern = "^" + escaped.replacingOccurrences(of: "\\*", with: ".*") + "$"
         return regexMatch(pattern: regexPattern, text: toolName)
     }
 
