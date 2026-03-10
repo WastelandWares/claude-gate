@@ -2,6 +2,11 @@
 
 All notable changes to claude-gate are documented here.
 
+## [Unreleased]
+
+### Changed
+- **Gate window visual refresh**: Modern layout with improved visual hierarchy — rule name + risk badge in title row, section backgrounds with rounded corners, color-coded styled buttons (green approve, red deny, blue info) with hover effects, uppercase pill-style risk badge, better typography weight progression (semibold title > semibold section headers > regular body > monospaced code), improved spacing and custom section gaps. All custom colors adapt to both light and dark mode. (#15)
+
 ## [v0.7.0] - 2026-03-08
 
 ### Added
