@@ -506,7 +506,7 @@ reason = "Sending messages via Slack is visible to others and hard to retract."
 risk = "high"
 
 [[rules]]
-name = "Gate: GitHub/Gitea API mutations"
+name = "Gate: GitHub API mutations"
 tool = "mcp__github__*"
 pattern = '(create|delete|update|merge|close|comment)'
 action = "gate"
